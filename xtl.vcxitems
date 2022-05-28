@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{f4310f1f-2332-4200-9061-fbc7257b6cb9}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)LICENSE.md" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl.config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_aligned_memory_block.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_cache_map.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_enum_struct_bitwise_operators.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_event_callback.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_exception.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_filesystem.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_functional.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_lazy.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_logger.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_memory_block_iostream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_memory_byte_stream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_producer_consumer_queue.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_spin_lock_mutex.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_stdc++.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_timestamp.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_value_or_error.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_worker_thread.h" />
+  </ItemGroup>
+</Project>
