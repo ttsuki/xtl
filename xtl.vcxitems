@@ -22,6 +22,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_aligned_memory_block.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_cache_map.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_delegate.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_enum_struct_bitwise_operators.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_event_callback.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_exception.h" />
@@ -35,6 +36,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_spin_lock_mutex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_stdc++.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_timestamp.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_unique_handle.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_value_or_error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_worker_thread.h" />
   </ItemGroup>
