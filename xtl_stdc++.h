@@ -4,18 +4,22 @@
 
 #pragma once
 
-#define XTL_cplusplus_(V) (defined(__cplusplus) && __cplusplus >= (V)) || (defined(_MSVC_LANG) && _MSVC_LANG >= (V))
-
-#if XTL_cplusplus_(201402L)
-#define XTL_cplusplus14 201402L
+#ifdef _MSVC_LANG
+#define XTL_cplusplus (_MSVC_LANG)
+#else
+#define XTL_cplusplus (__cplusplus)
 #endif
 
-#if XTL_cplusplus_(201703L)
-#define XTL_cplusplus17 201703L
+#if XTL_cplusplus >= 201402L
+#define XTL_cplusplus14 XTL_cplusplus
 #endif
 
-#if XTL_cplusplus_(202002L)
-#define XTL_cplusplus20 202002L
+#if XTL_cplusplus >= 201703L
+#define XTL_cplusplus17 XTL_cplusplus
+#endif
+
+#if XTL_cplusplus >= 202002L
+#define XTL_cplusplus20 XTL_cplusplus
 #endif
 
 // C library wrappers
