@@ -21,6 +21,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl.config.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_aligned_memory_block.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_any.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_cache_map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_delegate.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_enum_struct_bitwise_operators.h" />

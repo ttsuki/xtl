@@ -15,6 +15,8 @@
 #include <variant>
 #include <functional>
 
+#include "xtl_any.h"
+
 namespace
 XTL_NAMESPACE
 {
@@ -23,13 +25,8 @@ XTL_NAMESPACE
     template <class R, class ...A>
     class delegate<R (A ...)>
     {
-        using alignment_t = void*;
-        using sso_memory = std::array<alignment_t, 4>;
-        using heap_memory = std::unique_ptr<alignment_t[]>;
-        std::variant<nullptr_t, sso_memory, heap_memory> memory_ = nullptr;
+        xtl::any memory_ = xtl::any{};
         R (*invoke_)(delegate*, A ...) = nullptr;
-        void (*destruct_)(delegate*) = nullptr;
-        void (*move_)(delegate*, delegate*) = nullptr;
 
         template <class T> bool holds() const noexcept { return std::holds_alternative<T>(memory_); }
 
@@ -38,6 +35,7 @@ XTL_NAMESPACE
 
         delegate(nullptr_t)
         {
+            ;
         }
 
         template <class Functor, std::enable_if_t<
@@ -46,106 +44,42 @@ XTL_NAMESPACE
                       std::is_same_v<R, std::invoke_result_t<Functor, A...>>
                   > * = nullptr>
         delegate(Functor f)
+            : memory_(xtl::any(std::move(f)))
+            , invoke_([](delegate* this_, A ...a) -> R { return this_->memory_.get<Functor>()->operator()(std::forward<A>(a)...); })
         {
-            constexpr bool sso = sizeof(Functor) <= sizeof(sso_memory);
-            using memory_type = std::conditional_t<sso, sso_memory, heap_memory>;
-
-            // allocate memory
-            if constexpr (sso) memory_ = sso_memory{};
-            else memory_ = std::make_unique<alignment_t[]>((sizeof(f) + sizeof(alignment_t) - 1) / sizeof(alignment_t));
-
-            struct helper
-            {
-                static Functor* functor_pointer(delegate* this_)
-                {
-                    if constexpr (sso) return reinterpret_cast<Functor*>(std::get<sso_memory>(this_->memory_).data());
-                    else return reinterpret_cast<Functor*>(std::get<heap_memory>(this_->memory_).get());
-                }
-            };
-
-            // move construct lambda with placement new.
-            new(helper::functor_pointer(this)) Functor(std::move(f));
-
-            // invoker: operator()
-            invoke_ = [](delegate* this_, A ...a) -> R { return helper::functor_pointer(this_)->operator()(std::forward<A>(a)...); };
-
-            // destructor: ~this();
-            destruct_ = [](delegate* this_) { helper::functor_pointer(this_)->~Functor(); };
-
-            // move operator: this = std::move(other);
-            move_ = [](delegate* this_, delegate* other)
-            {
-                assert(this_->holds<nullptr_t>());
-
-                if (other->holds<nullptr_t>())
-                {
-                    // do nothing
-                }
-                else if (other->holds<sso_memory>())
-                {
-                    // move construct with placement new, and destruct other.
-                    this_->memory_ = sso_memory{};
-                    new(helper::functor_pointer(this_)) Functor(std::move(*helper::functor_pointer(other)));
-                    helper::functor_pointer(other)->~Functor();
-                    other->memory_ = nullptr;
-                }
-                else if (other->holds<heap_memory>())
-                {
-                    // move unique_ptr, and destruct other.
-                    this_->memory_ = std::move(std::get<heap_memory>(other->memory_));
-                    other->memory_ = nullptr;
-                }
-
-                // move traits
-                this_->invoke_ = std::exchange(other->invoke_, nullptr);
-                this_->destruct_ = std::exchange(other->destruct_, nullptr);
-                this_->move_ = std::exchange(other->move_, nullptr);
-            };
+            ;
         }
 
-        delegate(R (*function_pointer)(A ...)) : delegate([function_pointer](A ... a) { return function_pointer(std::forward<A>(a)...); }) { }
-        template <class T> delegate(T* instance, R (T::*member_function)(A ...)) : delegate([instance, member_function](A ...a) { return (instance->*member_function)(std::forward<A>(a)...); }) { }
-        template <class T> delegate(const T* instance, R (T::*member_function)(A ...) const) : delegate([instance, member_function](A ...a) { return (instance->*member_function)(std::forward<A>(a)...); }) { }
+        delegate(R (*function_pointer)(A ...)) : delegate([function_pointer](A ... a) { return function_pointer(std::forward<A>(a)...); }) { ; }
+        template <class T> delegate(T* instance, R (T::* member_function)(A ...)) : delegate([instance, member_function](A ...a) { return (instance->*member_function)(std::forward<A>(a)...); }) { ; }
+        template <class T> delegate(const T* instance, R (T::* member_function)(A ...) const) : delegate([instance, member_function](A ...a) { return (instance->*member_function)(std::forward<A>(a)...); }) { ; }
 #if defined(_MSC_VER) && defined(_M_IX86)
-        delegate(R (__stdcall  *function_pointer)(A ...)) : delegate([function_pointer](A ... a) { return function_pointer(std::forward<A>(a)...); }) { }
-        delegate(R (__thiscall *function_pointer)(A ...)) : delegate([function_pointer](A ... a) { return function_pointer(std::forward<A>(a)...); }) { }
+        delegate(R(__stdcall* function_pointer)(A ...)) : delegate([function_pointer](A ... a) { return function_pointer(std::forward<A>(a)...); }) { ; }
+        delegate(R(__thiscall* function_pointer)(A ...)) : delegate([function_pointer](A ... a) { return function_pointer(std::forward<A>(a)...); }) { ; }
 #endif
 
         delegate(const delegate&) = delete;
+        delegate& operator=(const delegate&) = delete;
 
         delegate(delegate&& other) noexcept
+            : memory_(std::move(other.memory_))
+            , invoke_(std::exchange(other.invoke_, nullptr))
         {
-            if (other.move_)
-                other.move_(this, &other);
+            ;
         }
-
-        delegate& operator=(const delegate&) = delete;
 
         delegate& operator=(delegate&& other) noexcept
         {
             if (std::addressof(other) != this)
             {
-                if (this->destruct_) this->destruct_(this);
-                this->memory_ = nullptr;
-                this->invoke_ = nullptr;
-                this->move_ = nullptr;
-                this->destruct_ = nullptr;
-
-                if (other.move_)
-                    other.move_(this, &other);
+                memory_ = std::move(other.memory_);
+                invoke_ = std::exchange(other.invoke_, nullptr);
             }
 
             return *this;
         }
 
-        ~delegate()
-        {
-            if (this->destruct_) this->destruct_(this);
-            this->memory_ = nullptr;
-            this->invoke_ = nullptr;
-            this->move_ = nullptr;
-            this->destruct_ = nullptr;
-        }
+        ~delegate() = default;
 
         R operator()(A ...args) const
         {
