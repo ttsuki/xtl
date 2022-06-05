@@ -23,6 +23,7 @@
 #include "xtl_producer_consumer_queue.h"
 #include "xtl_spin_lock_mutex.h"
 #include "xtl_timestamp.h"
+#include "xtl_type_indexed_map.h"
 #include "xtl_unique_handle.h"
 #include "xtl_value_or_error.h"
 #include "xtl_worker_thread.h"

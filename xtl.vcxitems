@@ -37,6 +37,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_spin_lock_mutex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_stdc++.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_timestamp.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_type_indexed_map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_unique_handle.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_value_or_error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_worker_thread.h" />
