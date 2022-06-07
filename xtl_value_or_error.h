@@ -39,11 +39,11 @@ XTL_NAMESPACE
         {
         }
 
-        [[nodiscard]] bool has_value() const noexcept { return var_.index() == holds_value::index; }
+        [[nodiscard]] bool has_value() const noexcept { return var_.index() == holds_value::value; }
         [[nodiscard]] TValue& value() { return std::get<holds_value::value>(var_); }
         [[nodiscard]] const TValue& value() const { return std::get<holds_value::value>(var_); }
 
-        [[nodiscard]] bool has_error() const noexcept { return var_.index() == holds_error::index; }
+        [[nodiscard]] bool has_error() const noexcept { return var_.index() == holds_error::value; }
         [[nodiscard]] TError& error() { return std::get<holds_error::value>(var_); }
         [[nodiscard]] const TError& error() const { return std::get<holds_error::value>(var_); }
 
