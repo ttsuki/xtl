@@ -44,7 +44,7 @@ XTL_NAMESPACE
         struct resource
         {
             std::mutex write_log_mutex_{};
-            event_callback<log_severity, const char_type*> listeners_{};
+            event_callback<void(log_severity, const char_type*)> listeners_{};
         };
 
         std::shared_ptr<resource> resource_ = std::make_shared<resource>();
@@ -53,7 +53,7 @@ XTL_NAMESPACE
         logger() = default;
 
         [[nodiscard]]
-        event_callback<log_severity, const char_type*>* listeners() const noexcept
+        event_callback<void(log_severity, const char_type*)>* listeners() const noexcept
         {
             return &resource_->listeners_;
         }

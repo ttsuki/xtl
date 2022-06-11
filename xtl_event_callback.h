@@ -12,8 +12,10 @@
 namespace
 XTL_NAMESPACE
 {
+    template <class F> class event_callback;
+
     template <class...TArgs>
-    class event_callback final
+    class event_callback<void(TArgs ...)> final
     {
     public:
         using subscribe_id = const void*;
@@ -24,9 +26,10 @@ XTL_NAMESPACE
 
         struct entry
         {
-            subscribe_id id;
-            callback callback;
-            std::unique_ptr<std::byte> idu;
+            subscribe_id id{};
+            callback callback{};
+            int priority{};
+            std::unique_ptr<std::byte> idu{};
         };
 
         std::vector<entry> functions_{};
@@ -57,20 +60,22 @@ XTL_NAMESPACE
             return functions_.clear();
         }
 
-        subscribe_id subscribe(callback f)
+        subscribe_id subscribe(callback f, int priority = 0)
         {
             auto p = std::make_unique<std::byte>();
             auto id = p.get();
 
             std::lock_guard lock(mutex_);
-            functions_.emplace_back(entry{id, std::move(f), std::move(p)});
+            functions_.emplace_back(entry{id, std::move(f), priority, std::move(p)});
+            std::stable_sort(functions_.begin(), functions_.end(), [](auto&& a, auto&& b) { return a.priority < b.priority; });
             return id;
         }
 
-        void subscribe(subscribe_id id, callback f)
+        void subscribe(subscribe_id id, callback f, int priority = 0)
         {
             std::lock_guard lock(mutex_);
-            functions_.emplace_back(entry{id, std::move(f), nullptr});
+            functions_.emplace_back(entry{id, std::move(f), priority, nullptr});
+            std::stable_sort(functions_.begin(), functions_.end(), [](auto&& a, auto&& b) { return a.priority < b.priority; });
         }
 
         bool unsubscribe(subscribe_id id)
