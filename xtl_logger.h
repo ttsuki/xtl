@@ -5,143 +5,46 @@
 #pragma once
 #include "xtl.config.h"
 
+#include <type_traits>
 #include <mutex>
-#include <streambuf>
-#include <ostream>
 
+#include "xtl_ostream.h"
 #include "xtl_event_callback.h"
 
 namespace
 XTL_NAMESPACE
 {
-    template <class T, class streambuf>
-    class ostream_for_streambuf final
-        : private streambuf
-        , public std::basic_ostream<T>
-    {
-    public:
-        template <class ...TArgs>
-        explicit ostream_for_streambuf(TArgs&&... streambuf_constructor_parameter)
-            : streambuf(std::forward<TArgs>(streambuf_constructor_parameter)...)
-            , std::basic_ostream<T>(static_cast<streambuf*>(this))
-        {
-        }
+    using logger_char_type = char;
 
-        ostream_for_streambuf(const ostream_for_streambuf& other) = delete;
-        ostream_for_streambuf(ostream_for_streambuf&& other) noexcept = delete;
-        ostream_for_streambuf& operator=(const ostream_for_streambuf& other) = delete;
-        ostream_for_streambuf& operator=(ostream_for_streambuf&& other) noexcept = delete;
-        ~ostream_for_streambuf() override = default;
+    enum struct log_severity : int
+    {
+        emergency = 800,
+        alert = 700,
+        critical = 600,
+        error = 500,
+        warning = 400,
+        notice = 300,
+        informational = 200,
+        debug = 100,
     };
 
-
-    namespace streambufs
-    {
-        template <class T = char>
-        class callback_ostream_streambuf : public std::basic_streambuf<T>
-        {
-        public:
-            using base_type = std::basic_streambuf<T>;
-            using char_type = typename base_type::char_type;
-            using traits_type = typename base_type::traits_type;
-            using int_type = typename base_type::int_type;
-            using pos_type = typename base_type::pos_type;
-            using off_type = typename base_type::off_type;
-
-            using callback_ostream_flush = std::function<void(const char_type*)>;
-
-            char_type buffer_[1024]{};
-            callback_ostream_flush sink_{};
-
-            explicit callback_ostream_streambuf(callback_ostream_flush sink)
-                : sink_(std::move(sink))
-            {
-                base_type::setp(buffer_, buffer_, buffer_ + _countof(buffer_) - 1);
-            }
-
-            ~callback_ostream_streambuf() override
-            {
-                callback_ostream_streambuf::sync();
-            }
-
-            int_type overflow(int_type c) override
-            {
-                sync();
-
-                if (c != traits_type::eof())
-                {
-                    *base_type::pptr() = traits_type::to_char_type(c);
-                    base_type::pbump(1);
-                }
-                return traits_type::not_eof(c);
-            }
-
-            int sync() override
-            {
-                if (base_type::pbase() == base_type::pptr()) { return 0; }
-
-                *base_type::pptr() = traits_type::to_char_type('\0');
-                sink_(base_type::pbase());
-                base_type::pbump(static_cast<int_type>(base_type::pbase() - base_type::pptr()));
-                return 0;
-            }
-        };
-
-        template <class T = char>
-        class null_ostream_streambuf : public std::basic_streambuf<T>
-        {
-        public:
-            using base_type = std::basic_streambuf<T>;
-            using char_type = typename std::basic_streambuf<T>::char_type;
-            using traits_type = typename std::basic_streambuf<T>::traits_type;
-            using int_type = typename std::basic_streambuf<T>::int_type;
-            using pos_type = typename std::basic_streambuf<T>::pos_type;
-            using off_type = typename std::basic_streambuf<T>::off_type;
-
-            char_type buffer_[4096];
-
-            explicit null_ostream_streambuf()
-            {
-                base_type::setp(buffer_, buffer_, buffer_ + sizeof(buffer_));
-            }
-
-            ~null_ostream_streambuf() override
-            {
-            }
-
-            int_type overflow(int_type c) override
-            {
-                base_type::setp(buffer_, buffer_, buffer_ + sizeof(buffer_));
-                return traits_type::not_eof(c);
-            }
-
-            int sync() override
-            {
-                base_type::setp(buffer_, buffer_, buffer_ + sizeof(buffer_));
-                return 0;
-            }
-        };
-    }
-
-    template <class char_type> using callback_ostream_flush = typename streambufs::callback_ostream_streambuf<char_type>::callback_ostream_flush;
-    template <class char_type> using callback_ostream = ostream_for_streambuf<char_type, streambufs::callback_ostream_streambuf<char_type>>;
-    template <class char_type> using nullout_ostream = ostream_for_streambuf<char_type, streambufs::null_ostream_streambuf<char_type>>;
-
-
-    using logger_char_type = char;
+    static inline bool operator <(log_severity a, log_severity b) noexcept { return static_cast<std::underlying_type_t<log_severity>>(a) < static_cast<std::underlying_type_t<log_severity>>(b); }
+    static inline bool operator <=(log_severity a, log_severity b) noexcept { return static_cast<std::underlying_type_t<log_severity>>(a) <= static_cast<std::underlying_type_t<log_severity>>(b); }
+    static inline bool operator >(log_severity a, log_severity b) noexcept { return static_cast<std::underlying_type_t<log_severity>>(a) > static_cast<std::underlying_type_t<log_severity>>(b); }
+    static inline bool operator >=(log_severity a, log_severity b) noexcept { return static_cast<std::underlying_type_t<log_severity>>(a) >= static_cast<std::underlying_type_t<log_severity>>(b); }
 
     class logger final
     {
     public:
         using char_type = logger_char_type;
-        using write_callback = callback_ostream_flush<char_type>;
-        using callback_ostream = callback_ostream<char_type>;
+        using stream_type = basic_o_callback_stream<char_type>;
+        using callback_type = basic_o_callback_stream_callback<char_type>;
 
     private:
         struct resource
         {
             std::mutex write_log_mutex_{};
-            event_callback<const char_type*> listeners_{};
+            event_callback<log_severity, const char_type*> listeners_{};
         };
 
         std::shared_ptr<resource> resource_ = std::make_shared<resource>();
@@ -150,59 +53,67 @@ XTL_NAMESPACE
         logger() = default;
 
         [[nodiscard]]
-        event_callback<const char_type*>* listeners() const noexcept
+        event_callback<log_severity, const char_type*>* listeners() const noexcept
         {
             return &resource_->listeners_;
         }
 
         [[nodiscard]]
-        auto open() const
+        auto stream(log_severity severity, const char_type* prefix = nullptr) const
         {
-            return callback_ostream([r = resource_](const char_type* text)
+            if (prefix == nullptr)
             {
-                std::lock_guard lock(r->write_log_mutex_);
-                r->listeners_.raise(text);
-            });
-        }
-
-        [[nodiscard]]
-        auto open(const char_type* prefix) const
-        {
-            std::basic_string<char_type> buffer;
-            buffer.reserve(1024);
-            buffer.append(prefix);
-
-            return callback_ostream([r = resource_, buffer = std::move(buffer)](const char_type* text) mutable
-            {
-                const size_t prefixSize = buffer.size();
-                std::lock_guard lock(r->write_log_mutex_);
-
-                while (auto c = *text++)
+                return stream_type([severity, r = resource_](const char_type* text)
                 {
-                    buffer += c;
-                    if (c == '\n')
+                    std::lock_guard lock(r->write_log_mutex_);
+                    r->listeners_.raise(severity, text);
+                });
+            }
+            else
+            {
+                std::basic_string<char_type> buffer;
+                buffer.reserve(4096);
+                buffer.append(prefix);
+
+                return stream_type([severity, r = resource_, buffer = std::move(buffer)](const char_type* text) mutable
+                {
+                    const size_t prefixSize = buffer.size();
+                    std::lock_guard lock(r->write_log_mutex_);
+
+                    while (auto c = *text++)
                     {
-                        r->listeners_.raise(buffer.c_str());
+                        buffer += c;
+                        if (c == '\n')
+                        {
+                            r->listeners_.raise(severity, buffer.c_str());
+                            buffer.resize(prefixSize);
+                        }
+                    }
+
+                    if (buffer.size() != prefixSize)
+                    {
+                        buffer += '\n';
+                        r->listeners_.raise(severity, buffer.c_str());
                         buffer.resize(prefixSize);
                     }
-                }
-
-                if (buffer.size() != prefixSize)
-                {
-                    buffer += '\n';
-                    r->listeners_.raise(buffer.c_str());
-                    buffer.resize(prefixSize);
-                }
-            });
+                });
+            }
         }
 
-        static logger* get_default_logger()
+     
+        [[nodiscard]] auto emerg(const char_type* prefix = nullptr) const { return stream(log_severity::emergency, prefix); }
+        [[nodiscard]] auto alert(const char_type* prefix = nullptr) const { return stream(log_severity::alert, prefix); }
+        [[nodiscard]] auto critical(const char_type* prefix = nullptr) const { return stream(log_severity::critical, prefix); }
+        [[nodiscard]] auto error(const char_type* prefix = nullptr) const { return stream(log_severity::error, prefix); }
+        [[nodiscard]] auto warn(const char_type* prefix = nullptr) const { return stream(log_severity::warning, prefix); }
+        [[nodiscard]] auto notice(const char_type* prefix = nullptr) const { return stream(log_severity::notice, prefix); }
+        [[nodiscard]] auto info(const char_type* prefix = nullptr) const { return stream(log_severity::informational, prefix); }
+        [[nodiscard]] auto debug(const char_type* prefix = nullptr) const { return stream(log_severity::debug, prefix); }
+
+        [[nodiscard]] static logger* get_default_logger()
         {
             static logger default_logger_instance;
             return &default_logger_instance;
         }
     };
-
-    static inline auto log() { return logger::get_default_logger()->open(); }
-    static inline auto log(const char* section) { return logger::get_default_logger()->open(section); }
 }

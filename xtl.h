@@ -21,6 +21,7 @@
 #include "xtl_memory_block_iostream.h"
 #include "xtl_memory_byte_stream.h"
 #include "xtl_producer_consumer_queue.h"
+#include "xtl_ostream.h"
 #include "xtl_spin_lock_mutex.h"
 #include "xtl_timestamp.h"
 #include "xtl_type_indexed_map.h"

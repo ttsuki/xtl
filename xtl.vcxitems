@@ -33,6 +33,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_logger.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_memory_block_iostream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_memory_byte_stream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_ostream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_producer_consumer_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_spin_lock_mutex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_stdc++.h" />
