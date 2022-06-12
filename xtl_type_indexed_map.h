@@ -39,7 +39,7 @@ XTL_NAMESPACE
         template <class T>
         [[nodiscard]] T* find() noexcept
         {
-            return const_cast<T*>(const_cast<const decltype(this)>(this)->find<T>());
+            return const_cast<T*>(const_cast<const type_indexed_map*>(this)->find<T>());
         }
 
         template <class T>
@@ -49,7 +49,7 @@ XTL_NAMESPACE
         }
 
         template <class T>
-        [[nodiscard]] const T& get() const noexcept
+        [[nodiscard]] const T& get() const
         {
             if (auto* p = find<T>())
                 return *p;
@@ -58,9 +58,9 @@ XTL_NAMESPACE
         }
 
         template <class T>
-        [[nodiscard]] T& get() noexcept
+        [[nodiscard]] T& get()
         {
-            return const_cast<T&>(const_cast<const decltype(this)>(this)->get<T>());
+            return const_cast<T&>(const_cast<const type_indexed_map*>(this)->get<T>());
         }
 
         template <class T>

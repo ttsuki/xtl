@@ -55,8 +55,8 @@ XTL_NAMESPACE
 
             static const T* pointer(const memory& this_)
             {
-                if constexpr (soo) return reinterpret_cast<T*>(std::get<soo_memory>(this_).data());
-                else return reinterpret_cast<T*>(std::get<heap_memory>(this_).get());
+                if constexpr (soo) return reinterpret_cast<const T*>(std::get<soo_memory>(this_).data());
+                else return reinterpret_cast<const T*>(std::get<heap_memory>(this_).get());
             }
 
             template <class U, std::enable_if_t<std::is_constructible_v<T, U&&>>* = nullptr>
