@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl simple worker thread
+/// @brief  xtl simple worker thread pool
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once
@@ -24,12 +24,14 @@ XTL_NAMESPACE
         using thread_epilogue = std::function<void(const std::string& label, std::thread::id thread_id)>;
 
     private:
-        static inline std::atomic<std::pair<thread_prologue, thread_epilogue>> envelope_function;
+        static inline std::shared_mutex mutex_;
+        static inline std::pair<thread_prologue, thread_epilogue> envelope_function_;
 
     public:
         template <class F, class... Args>
         static std::thread create(const std::string& label, F&& function, Args&&...args)
         {
+            std::shared_lock lock(mutex_);
             return std::thread(
                 [
                     f = std::forward<F>(function),
@@ -45,12 +47,14 @@ XTL_NAMESPACE
 
         static std::pair<thread_prologue, thread_epilogue> get_hook_functions()
         {
-            return envelope_function.load();
+            std::shared_lock lock(mutex_);
+            return envelope_function_;
         }
 
         static void set_hook_function(thread_prologue prologue, thread_epilogue epilogue)
         {
-            envelope_function.store(std::make_pair(std::move(prologue), std::move(epilogue)));
+            std::scoped_lock lock(mutex_);
+            envelope_function_ = std::make_pair(std::move(prologue), std::move(epilogue));
         }
     };
 
@@ -93,22 +97,22 @@ XTL_NAMESPACE
     }
 
     /// worker thread
-    class worker_thread final
+    class worker_thread_pool final
     {
         std::vector<std::thread> threads_{};
         producer_consumer_queue<std::function<void()>> task_queue_{};
 
     public:
-        worker_thread(const worker_thread& other) = delete;
-        worker_thread(worker_thread&& other) noexcept = delete;
-        worker_thread& operator=(const worker_thread& other) = delete;
-        worker_thread& operator=(worker_thread&& other) noexcept = delete;
+        worker_thread_pool(const worker_thread_pool& other) = delete;
+        worker_thread_pool(worker_thread_pool&& other) noexcept = delete;
+        worker_thread_pool& operator=(const worker_thread_pool& other) = delete;
+        worker_thread_pool& operator=(worker_thread_pool&& other) noexcept = delete;
 
         template <class thread_factory = default_thread_factory>
-        worker_thread(const std::string& label, size_t thread_count = 1, thread_factory factory = default_thread_factory{})
+        worker_thread_pool(const std::string& label, size_t thread_count = 1, thread_factory factory = default_thread_factory{})
         {
             for (size_t i = 0; i < thread_count; i++)
-                threads_.emplace(factory.create(label, [this]
+                threads_.emplace_back(factory.create(label, [this]
                 {
                     while (auto f = task_queue_.pop_wait())
                         try
@@ -121,7 +125,7 @@ XTL_NAMESPACE
                 }));
         }
 
-        ~worker_thread()
+        ~worker_thread_pool()
         {
             task_queue_.close();
             for (auto& thread : threads_)
@@ -138,7 +142,7 @@ XTL_NAMESPACE
         {
             auto [body, future] = make_async_task(std::forward<Callable>(callable), std::forward<Args>(args)...);
             this->post_and_forget(body);
-            return future;
+            return std::move(future);
         }
     };
 }

@@ -41,6 +41,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_type_indexed_map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_unique_handle.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_value_or_error.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_worker_thread.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_worker_thread_pool.h" />
   </ItemGroup>
 </Project>
