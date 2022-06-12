@@ -120,7 +120,7 @@ XTL_NAMESPACE
 
                 *base_type::pptr() = traits_type::to_char_type('\0');
                 sink_(base_type::pbase());
-                base_type::pbump(static_cast<int_type>(base_type::pbase() - base_type::pptr()));
+                base_type::pbump(static_cast<int>(base_type::pbase() - base_type::pptr()));
                 return 0;
             }
         };
