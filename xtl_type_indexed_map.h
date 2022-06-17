@@ -64,10 +64,11 @@ XTL_NAMESPACE
         }
 
         template <class T>
-        void set(std::decay_t<T> value)
+        T& set(std::decay_t<T> value)
         {
             container_.erase(index<T>);
-            container_.emplace(index<T>, std::move(value));
+            auto [it, inserted] = container_.emplace(index<T>, std::move(value));
+            return *it->second.template get<T>();
         }
 
         template <class T>
