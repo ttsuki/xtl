@@ -60,7 +60,7 @@ XTL_NAMESPACE
 #endif
 
             char str[64]{};
-            size_t len = std::strftime(str, sizeof(str), "%Y-%m-%dT%H:%I:%S", &tm);
+            size_t len = std::strftime(str, sizeof(str), "%Y-%m-%d %H:%M:%S", &tm);
 
             static_assert(unit::period::num == 1 && unit::period::den == 1000000);
             std::snprintf(str + len, sizeof(str) - len, ".%06d", static_cast<int>(tick * unit::period::num % unit::period::den));
