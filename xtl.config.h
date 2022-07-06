@@ -4,8 +4,6 @@
 
 #pragma once
 
-#ifdef XTL_NAMESPACE_INTO
-#define XTL_NAMESPACE XTL_NAMESPACE_INTO::xtl
-#else
+#ifndef XTL_NAMESPACE
 #define XTL_NAMESPACE xtl
 #endif
