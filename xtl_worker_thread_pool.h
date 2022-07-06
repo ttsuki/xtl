@@ -5,7 +5,6 @@
 #pragma once
 #include "xtl.config.h"
 
-#include <atomic>
 #include <string>
 #include <thread>
 #include <functional>
