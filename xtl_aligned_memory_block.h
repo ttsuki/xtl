@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::aligned_memory_block
-/// @author (C) 2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"

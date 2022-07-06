@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::unique_handle - unique_ptr with type-erased deleter
-/// @author (C) 2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"

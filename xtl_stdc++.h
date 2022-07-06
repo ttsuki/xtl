@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::stdc++ - includes all standard C++ headers.
-/// @author (C) 2021-2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 

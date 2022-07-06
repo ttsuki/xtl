@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::any - a move only any implementation
-/// @author (C) 2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"

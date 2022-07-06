@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::cache_map
-/// @author (C) 2021-2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"

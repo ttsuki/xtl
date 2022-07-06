@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::type_indexed_map
-/// @author (C) 2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"

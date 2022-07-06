@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::value_or_error
-/// @author (C) 2021-2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"

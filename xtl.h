@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl - C++ template library eXtra
-/// @author (C) 2021-2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 

@@ -1,6 +1,6 @@
 /// @file
 /// @brief  xtl::enum_struct_bitwise_operators
-/// @author (C) 2022 ttsuki
+/// @author ttsuki
 
 #pragma once
 #include "xtl.config.h"
