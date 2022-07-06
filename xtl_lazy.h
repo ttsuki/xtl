@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl lazy
+/// @brief  xtl::lazy
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

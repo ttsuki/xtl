@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl exception helper
+/// @brief  xtl::exception helper
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

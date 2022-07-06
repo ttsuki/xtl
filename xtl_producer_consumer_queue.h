@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl queue for producer-consumer pattern
+/// @brief  xtl::producer_consumer_queue
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl type indexed map
+/// @brief  xtl::type_indexed_map
 /// @author (C) 2022 ttsuki
 
 #pragma once

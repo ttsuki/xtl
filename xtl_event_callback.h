@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl event_callback
+/// @brief  xtl::event_callback
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

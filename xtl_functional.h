@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl functional
+/// @brief  xtl::functional
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

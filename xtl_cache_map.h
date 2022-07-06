@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl cache map
+/// @brief  xtl::cache_map
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

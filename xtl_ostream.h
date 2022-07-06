@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl ostream
+/// @brief  xtl::ostream
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

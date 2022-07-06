@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl unique_handle - unique_ptr with type-erased deleter
+/// @brief  xtl::unique_handle - unique_ptr with type-erased deleter
 /// @author (C) 2022 ttsuki
 
 #pragma once

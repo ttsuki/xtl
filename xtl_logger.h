@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl logger
+/// @brief  xtl::logger
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

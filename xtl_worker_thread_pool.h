@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl simple worker thread pool
+/// @brief  xtl::worker_thread_pool
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

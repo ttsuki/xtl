@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl memory_block_iostream
+/// @brief  xtl::memory_block_iostream
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

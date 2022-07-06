@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl timestamp - Simple timestamp type
+/// @brief  xtl::timestamp - Simple timestamp type
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

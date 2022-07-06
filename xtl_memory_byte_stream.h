@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl memory_byte_stream
+/// @brief  xtl::memory_byte_stream
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

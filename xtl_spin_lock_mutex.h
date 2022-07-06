@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl spin_lock_mutex
+/// @brief  xtl::spin_lock_mutex
 /// @author (C) 2021-2022 ttsuki
 
 #pragma once

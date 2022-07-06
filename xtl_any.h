@@ -1,5 +1,5 @@
 /// @file
-/// @brief  xtl move only any
+/// @brief  xtl::any - a move only any implementation
 /// @author (C) 2022 ttsuki
 
 #pragma once
