@@ -95,7 +95,7 @@ XTL_NAMESPACE
         };
 
     public:
-        constexpr any() noexcept = default;
+        any() {}
         any(const any& other) = delete;
         any(any&& other) noexcept { this->reset(std::move(other)); }
         any& operator=(const any& other) = delete;
