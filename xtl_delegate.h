@@ -45,7 +45,7 @@ XTL_NAMESPACE
                   > * = nullptr>
         delegate(Functor f)
             : memory_(xtl::any(std::move(f)))
-            , invoke_([](delegate* this_, A ...a) -> R { return this_->memory_.get<Functor>()->operator()(std::forward<A>(a)...); })
+            , invoke_([](delegate* this_, A ...a) -> R { return this_->memory_.template get<Functor>()->operator()(std::forward<A>(a)...); })
         {
             ;
         }
