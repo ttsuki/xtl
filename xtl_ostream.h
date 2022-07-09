@@ -94,7 +94,7 @@ XTL_NAMESPACE
             explicit basic_o_callback_streambuf(callback_type sink)
                 : sink_(std::move(sink))
             {
-                base_type::setp(buffer_, buffer_, buffer_ + _countof(buffer_) - 1);
+                base_type::setp(buffer_, buffer_ + std::size(buffer_) - 1);
             }
 
             ~basic_o_callback_streambuf() override
