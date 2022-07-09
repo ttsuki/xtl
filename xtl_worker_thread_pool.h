@@ -28,18 +28,19 @@ XTL_NAMESPACE
 
     public:
         template <class F, class... Args>
-        static std::thread create(const std::string& label, F&& function, Args&&...args)
+        static std::thread create(const std::string& label, F function, Args...args)
         {
             std::shared_lock lock(mutex_);
             return std::thread(
                 [
-                    f = std::forward<F>(function),
+                    f = std::move(function),
+                    a = std::make_tuple(std::move(args)...),
                     e = get_hook_functions(),
                     label = label
-                ](Args&&...args) mutable
+                ]() mutable
                 {
                     if (e.first) { e.first(label, std::this_thread::get_id()); }
-                    f(std::forward<Args>(args)...);
+                    std::apply(std::move(f), std::move(a));
                     if (e.second) { e.second(label, std::this_thread::get_id()); }
                 });
         }
