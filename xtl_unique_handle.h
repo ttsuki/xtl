@@ -36,5 +36,5 @@ XTL_NAMESPACE
         explicit operator bool() const noexcept { return static_cast<bool>(handle_); }
     };
 
-    template unique_handle<void*>;
+    template class unique_handle<void*>;
 }
