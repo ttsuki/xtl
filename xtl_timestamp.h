@@ -54,8 +54,8 @@ XTL_NAMESPACE
 #if defined(_MSC_VER)
             localtime_s(&tm, &time);
 #else
-            //localtime_r(&time, &tm); // since C23
-            localtime_s(&time, &tm); // since C11
+            localtime_r(&time, &tm); // since C23
+            //localtime_s(&time, &tm); // since C11
             //tm = *localtime(&time);
 #endif
 
