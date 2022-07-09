@@ -26,10 +26,10 @@ XTL_NAMESPACE
 
         struct entry
         {
-            subscribe_id id{};
-            callback callback{};
-            int priority{};
-            std::unique_ptr<std::byte> idu{};
+            subscribe_id id_{};
+            callback callback_{};
+            int priority_{};
+            std::unique_ptr<std::byte> idu_{};
         };
 
         std::vector<entry> functions_{};
@@ -67,7 +67,7 @@ XTL_NAMESPACE
 
             std::lock_guard lock(mutex_);
             functions_.emplace_back(entry{id, std::move(f), priority, std::move(p)});
-            std::stable_sort(functions_.begin(), functions_.end(), [](auto&& a, auto&& b) { return a.priority < b.priority; });
+            std::stable_sort(functions_.begin(), functions_.end(), [](auto&& a, auto&& b) { return a.priority_ < b.priority_; });
             return id;
         }
 
@@ -75,7 +75,7 @@ XTL_NAMESPACE
         {
             std::lock_guard lock(mutex_);
             functions_.emplace_back(entry{id, std::move(f), priority, nullptr});
-            std::stable_sort(functions_.begin(), functions_.end(), [](auto&& a, auto&& b) { return a.priority < b.priority; });
+            std::stable_sort(functions_.begin(), functions_.end(), [](auto&& a, auto&& b) { return a.priority_ < b.priority_; });
         }
 
         bool unsubscribe(subscribe_id id)
@@ -83,7 +83,7 @@ XTL_NAMESPACE
             std::lock_guard lock(mutex_);
             for (auto it = functions_.begin(); it != functions_.end(); ++it)
             {
-                if (it->id == id)
+                if (it->id_ == id)
                 {
                     functions_.erase(it);
                     return true;
@@ -103,12 +103,12 @@ XTL_NAMESPACE
             else if (functions_.size() == 1)
             {
                 // can use move semantic.
-                functions_.front().callback(std::forward<Args>(params)...);
+                functions_.front().callback_(std::forward<Args>(params)...);
             }
             else
             {
                 // can't use move semantic.
-                for (auto& f : functions_) f.callback(params...);
+                for (auto& f : functions_) f.callback_(params...);
             }
         }
     };
