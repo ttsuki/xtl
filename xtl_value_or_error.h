@@ -14,7 +14,7 @@ XTL_NAMESPACE
     template <class TValue, class TError>
     class value_or_error
     {
-        std::variant<nullptr_t, TValue, TError> var_;
+        std::variant<std::nullptr_t, TValue, TError> var_;
 
     public:
         /// tags for dispatch

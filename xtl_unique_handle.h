@@ -17,7 +17,7 @@ XTL_NAMESPACE
         std::unique_ptr<std::remove_pointer_t<T>, delegate<void(T)>> handle_;
 
     public:
-        unique_handle(nullptr_t = nullptr)
+        unique_handle(std::nullptr_t = nullptr)
         {
         }
 

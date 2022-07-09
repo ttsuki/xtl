@@ -33,7 +33,7 @@ XTL_NAMESPACE
     public:
         delegate() = default;
 
-        delegate(nullptr_t)
+        delegate(std::nullptr_t)
         {
             ;
         }
