@@ -6,12 +6,11 @@
 #include "xtl.config.h"
 
 #include <ios>
-#include <fstream>
-#include <sstream>
-#include <optional>
 #include <string>
-
 #include <filesystem>
+#include <fstream>
+#include <optional>
+
 #include <functional>
 #include <regex>
 
@@ -20,12 +19,16 @@
 namespace
 XTL_NAMESPACE::filesystem
 {
-    static inline value_or_error<std::string, errno_t> read_file_whole(const std::wstring& path)
+    typedef int errno_t;
+
+    static inline auto read_file_whole(const std::filesystem::path& path)
+    -> value_or_error<std::string, errno_t>
     {
         std::ifstream ifs(path, std::ios::in | std::ios::binary | std::ios::ate);
         if (ifs.fail()) { return static_cast<errno_t>(errno); }
 
-        std::string data(ifs.tellg(), '\0');
+        const std::ifstream::pos_type file_size = ifs.tellg();
+        std::string data(file_size, '\0');
         ifs.seekg(0, std::ios::beg);
         ifs.read(data.data(), static_cast<std::streamsize>(data.size()));
         if (ifs.fail()) { return static_cast<errno_t>(errno); }
@@ -33,11 +36,12 @@ XTL_NAMESPACE::filesystem
         return data;
     }
 
-    static inline value_or_error<decltype(std::ignore), errno_t> write_file_whole(const std::wstring& path, const void* data, size_t length)
+    static inline auto write_file_whole(const std::filesystem::path& path, const void* data, size_t length)
+    -> value_or_error<decltype(std::ignore), errno_t>
     {
         std::ofstream ofs(path, std::ios::out | std::ios::trunc | std::ios::binary);
         if (ofs.fail()) { return static_cast<errno_t>(errno); }
-        ofs.write(static_cast<const char*>(data), length);
+        ofs.write(static_cast<const char*>(data), static_cast<std::streamsize>(length));
         if (ofs.fail()) { return static_cast<errno_t>(errno); }
         return decltype(std::ignore){};
     }
