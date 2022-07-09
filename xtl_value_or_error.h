@@ -29,12 +29,12 @@ XTL_NAMESPACE
     public:
         value_or_error() = default;
 
-        value_or_error(TValue&& value, holds_value = {})
+        value_or_error(TValue value, holds_value = {})
             : var_(std::forward<TValue>(value))
         {
         }
 
-        value_or_error(TError&& error, holds_error = {})
+        value_or_error(TError error, holds_error = {})
             : var_(std::forward<TError>(error))
         {
         }
