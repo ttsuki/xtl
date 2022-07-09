@@ -16,7 +16,7 @@ XTL_NAMESPACE
     /// Simple spin-lock mutex.
     class spin_lock_mutex final
     {
-        std::atomic_flag state_{ATOMIC_FLAG_INIT};
+        std::atomic_flag state_{/*ATOMIC_FLAG_INIT*/};
 
     public:
         spin_lock_mutex() = default;
@@ -54,7 +54,7 @@ XTL_NAMESPACE
     class recursive_spin_lock_mutex final
     {
         using thread_id = std::thread::id;
-        std::atomic_flag state_{ATOMIC_FLAG_INIT};
+        std::atomic_flag state_{/*ATOMIC_FLAG_INIT*/};
         std::atomic<thread_id> owner_{};
         size_t lock_count_{};
 
