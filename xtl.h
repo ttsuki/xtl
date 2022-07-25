@@ -15,6 +15,7 @@
 #include "xtl_event_callback.h"
 #include "xtl_exception.h"
 #include "xtl_filesystem.h"
+#include "xtl_fixed_buffer_string.h"
 #include "xtl_functional.h"
 #include "xtl_lazy.h"
 #include "xtl_logger.h"

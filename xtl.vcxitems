@@ -28,6 +28,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_event_callback.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_exception.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_filesystem.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_fixed_buffer_string.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_functional.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_lazy.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_logger.h" />
