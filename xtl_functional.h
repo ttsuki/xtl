@@ -3,18 +3,16 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <utility>
 #include <type_traits>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
-    template <class T, class TResult, class...TArgs>
-    static inline constexpr auto bind_this(T* this_pointer, TResult (T::* member_function_pointer)(TArgs ...args)) noexcept
+    template <class T, class TResult, class... TArgs>
+    static inline constexpr auto bind_this(T* this_pointer, TResult (T::* member_function_pointer)(TArgs... args)) noexcept
     {
-        return [this_pointer, member_function_pointer](TArgs ...args) -> TResult
+        return [this_pointer, member_function_pointer](TArgs... args) -> TResult
         {
             return (this_pointer->*member_function_pointer)(std::forward<TArgs>(args)...);
         };
@@ -25,11 +23,7 @@ XTL_NAMESPACE
     class fixed_point_combinator final : F
     {
     public:
-        template <class TF>
-        constexpr fixed_point_combinator(TF&& f) : F(std::forward<TF>(f))
-        {
-        }
-
+        template <class TF> constexpr fixed_point_combinator(TF&& f) : F(std::forward<TF>(f)) { }
         fixed_point_combinator(const fixed_point_combinator& other) = delete;
         fixed_point_combinator(fixed_point_combinator&& other) noexcept = delete;
         fixed_point_combinator& operator=(const fixed_point_combinator& other) = delete;

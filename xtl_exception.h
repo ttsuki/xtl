@@ -3,14 +3,12 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <string>
 #include <exception>
 #include <stdexcept>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     /// @returns ex.what following nested.what recursively if nested.
     static inline std::string what_is_current_exception() noexcept
@@ -34,7 +32,7 @@ XTL_NAMESPACE
         }
         catch (...)
         {
-            resultMessage += "unknown type, which is not std::exception, is thrown.";
+            resultMessage += "unknown type (not an std::exception) is thrown.";
         }
 
         return resultMessage;

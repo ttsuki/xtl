@@ -3,12 +3,10 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <variant>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     /// Represents a value or a error.
     template <class TValue, class TError>

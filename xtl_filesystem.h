@@ -3,7 +3,6 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <ios>
 #include <string>
@@ -15,14 +14,14 @@
 #include <regex>
 
 #include "xtl_value_or_error.h"
+#include "xtl_functional.h"
+#include "xtl_enum_struct_bitwise_operators.h"
 
-namespace
-XTL_NAMESPACE::filesystem
+namespace xtl::filesystem
 {
     typedef int errno_t;
 
-    static inline auto read_file_whole(const std::filesystem::path& path)
-    -> value_or_error<std::string, errno_t>
+    [[nodiscard]] static inline value_or_error<std::string, errno_t> read_file_whole(const std::filesystem::path& path)
     {
         std::ifstream ifs(path, std::ios::in | std::ios::binary | std::ios::ate);
         if (ifs.fail()) { return static_cast<errno_t>(errno); }
@@ -36,8 +35,7 @@ XTL_NAMESPACE::filesystem
         return data;
     }
 
-    static inline auto write_file_whole(const std::filesystem::path& path, const void* data, size_t length)
-    -> value_or_error<decltype(std::ignore), errno_t>
+    [[nodiscard]] static inline value_or_error<decltype(std::ignore), errno_t> write_file_whole(const std::filesystem::path& path, const void* data, size_t length)
     {
         std::ofstream ofs(path, std::ios::out | std::ios::trunc | std::ios::binary);
         if (ofs.fail()) { return static_cast<errno_t>(errno); }
@@ -46,15 +44,75 @@ XTL_NAMESPACE::filesystem
         return decltype(std::ignore){};
     }
 
+    using std::filesystem::path;
+    using std::filesystem::directory_iterator;
+
+    template <class F, std::enable_if_t<std::is_invocable_v<F, directory_iterator>>* = nullptr>
+    static void enumerate_entries_in_directory(const path& root, F&& callback, bool recursive = false)
+    {
+        xtl::with_fixed([&root, &callback, recursive](auto&& f, const path& prefix = {}) -> void
+        {
+            for (auto it = directory_iterator(prefix);
+                 it != directory_iterator();
+                 ++it)
+            {
+                callback(it);
+                if (recursive && it->is_directory())
+                    f(prefix / it->path().filename());
+            }
+        })(root);
+    }
+
+    template <class F, std::enable_if_t<std::is_invocable_v<F, directory_iterator>>* = nullptr>
+    static void enumerate_entries_in_recursive(const path& root, F&& callback)
+    {
+        return filesystem::enumerate_entries_in_directory(root, std::forward<F>(callback), true);
+    }
+
+    enum struct file_type : unsigned int
+    {
+        none = 0,
+        others = 1 << 0,
+        regular_file = 1 << 1,
+        directory = 1 << 2,
+        any = static_cast<unsigned int>(-1),
+
+        regular_file_or_directory = regular_file | directory,
+    };
+
+    XTL_enable_enum_struct_bitwise_operators(file_type);
+
+    static inline bool it_is(const directory_iterator& it, file_type types)
+    {
+        file_type i{};
+        if (it->is_regular_file()) i |= file_type::regular_file;
+        else if (it->is_directory()) i |= file_type::directory;
+        else i |= file_type::others;
+        return !!(i & types);
+    }
+
+    template <class Char>
+    struct path_regex
+    {
+        using char_type = Char;
+        using regex_type = std::basic_regex<Char>;
+        regex_type regex;
+
+        [[nodiscard]] bool filename_match(const path& path) const { return std::regex_match(path.filename().generic_string<Char>(), regex); }
+        [[nodiscard]] bool filename_match(const directory_iterator& it) const { return filename_match(it->path()); }
+    };
+
     /// Converts file-path-wildcards to regex-expression.
     /// `*.png` -> `.*\.png`
-    template <class TChar = char>
-    static inline std::basic_regex<TChar> get_regex_for_filesystem_wildcards(std::basic_string_view<TChar> pattern)
+    template <class String, class char_type = typename decltype(std::basic_string_view(std::declval<std::decay_t<String>>()))::value_type>
+    [[nodiscard]] static inline path_regex<char_type> make_regex_for_filesystem_wildcards(String&& pattern_string)
     {
-        std::basic_string<TChar> regex;
-        regex.reserve(pattern.size() * 2);
+        std::basic_string_view pattern_view = pattern_string;
+        std::basic_string<char_type> regex;
+
+        regex.reserve(pattern_view.size() * 2);
         regex += '^';
-        for (TChar c : pattern)
+        for (char_type c : pattern_view)
         {
             if (c == '\\') { regex += '\\'; }
             if (c == '.') { regex += '\\'; }
@@ -63,51 +121,12 @@ XTL_NAMESPACE::filesystem
             regex += c;
         }
         regex += '$';
-        return std::basic_regex<TChar>(regex);
+        return path_regex<char_type>{std::basic_regex<char_type>(regex)};
     }
 
-    template std::regex get_regex_for_filesystem_wildcards(std::string_view pattern);
-    template std::wregex get_regex_for_filesystem_wildcards(std::wstring_view pattern);
-
-    /// Gets file/directory list in specified directory
-    template <class TChar>
-    [[nodiscard]] static std::vector<std::basic_string<TChar>>
-    enumerate_entry_in_directory(
-        std::basic_string_view<TChar> directory,
-        std::optional<std::basic_string_view<TChar>> pattern = std::nullopt,
-        bool regular_file_only = false,
-        bool directory_only = false)
+    template <class char_type>
+    [[nodiscard]] static inline auto filename_match(const directory_iterator& it, const path_regex<char_type>& pattern_regex)
     {
-        std::vector<std::basic_string<TChar>> result{};
-
-        std::optional<std::basic_regex<TChar>> regex = std::nullopt;
-        std::match_results<typename std::basic_string<TChar>::iterator> m{};
-        if (pattern) regex = get_regex_for_filesystem_wildcards(*pattern);
-
-        for (auto it = std::filesystem::directory_iterator(directory);
-             it != std::filesystem::directory_iterator();
-             ++it)
-        {
-            std::basic_string<TChar> filename = it->path().filename().generic_string<TChar>();
-            if (regular_file_only && !it->is_regular_file()) continue;
-            if (directory_only && !it->is_directory()) continue;
-            if (regex && !std::regex_match(filename.begin(), filename.end(), m, *regex)) continue;
-            if (it->is_directory()) filename += static_cast<TChar>('/');
-            result.push_back(filename);
-        }
-
-        return result;
+        return pattern_regex.filename_match(it);
     }
-
-    template std::vector<std::string> enumerate_entry_in_directory(
-        std::string_view dir,
-        std::optional<std::string_view> pattern,
-        bool regular_file_only,
-        bool directory_only);
-
-    template std::vector<std::wstring> enumerate_entry_in_directory(
-        std::wstring_view dir,
-        std::optional<std::wstring_view> pattern,
-        bool regular_file_only,
-        bool directory_only);
 }

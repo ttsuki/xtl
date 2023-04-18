@@ -1,16 +1,13 @@
 /// @file
 /// @brief  xtl::timestamp - Simple timestamp type
 /// @author ttsuki
-
 #pragma once
-#include "xtl.config.h"
 
 #include <chrono>
 #include <string>
 #include <ctime>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     struct timestamp
     {

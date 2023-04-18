@@ -3,177 +3,184 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
-#include <new>
 #include <cstddef>
+#include <new>
 #include <array>
+#include <cassert>
 #include <memory>
 #include <variant>
 #include <typeindex>
+#include <any>
 #include <stdexcept>
 
-namespace
-XTL_NAMESPACE
+#include "xtl_small_object_optimization.h"
+
+namespace xtl
 {
-    // move only any with soo: small object optimization
+    // move-only any
     class any
     {
-        using alignment_t = void*;
-        static constexpr inline size_t soo_threshold = sizeof(alignment_t) * 2;
-        static inline std::type_index empty_type_index_ = std::type_index(typeid(void));
+        template <class T> static constexpr inline bool is_any = std::is_same_v<std::decay_t<T>, any>;
+        template <class T> static constexpr inline bool is_fit = std::is_nothrow_move_constructible_v<T>;
 
-        struct empty_memory
+        struct alignas(std::max_align_t) alignment_t
         {
-            empty_memory() = default;
-            empty_memory(const empty_memory& other) = delete;
-            empty_memory(empty_memory&& other) noexcept = delete;
-            empty_memory& operator=(const empty_memory& other) = delete;
-            empty_memory& operator=(empty_memory&& other) noexcept = delete;
-            ~empty_memory() = default;
+            std::byte buffer[sizeof(void*) * 7];
         };
 
-        using soo_memory = std::array<alignment_t, soo_threshold / sizeof(alignment_t)>;
-        using heap_memory = std::unique_ptr<alignment_t[]>;
-        using memory = std::variant<empty_memory, soo_memory, heap_memory>;
-
-        memory memory_{};
-        std::type_index type_ = std::type_index{typeid(void)};
-        void (*move_constructor_)(memory&, memory&&) noexcept = nullptr;
-        void (*destructor_)(memory&) noexcept = nullptr;
-
-        template <class T>
-        struct memory_helper
-        {
-            static inline constexpr bool soo = sizeof(T) <= sizeof(soo_memory);
-
-            static T* pointer(memory& this_)
-            {
-                if constexpr (soo) return reinterpret_cast<T*>(std::get<soo_memory>(this_).data());
-                else return reinterpret_cast<T*>(std::get<heap_memory>(this_).get());
-            }
-
-            static const T* pointer(const memory& this_)
-            {
-                if constexpr (soo) return reinterpret_cast<const T*>(std::get<soo_memory>(this_).data());
-                else return reinterpret_cast<const T*>(std::get<heap_memory>(this_).get());
-            }
-
-            template <class U, std::enable_if_t<std::is_constructible_v<T, U&&>>* = nullptr>
-            static void construct(memory& this_, U&& object)
-            {
-                if (!std::holds_alternative<empty_memory>(this_)) throw std::logic_error("precondition failure.");
-
-                // allocate memory
-                if constexpr (soo) this_.emplace<soo_memory>();
-                else this_.emplace<heap_memory>(std::make_unique<alignment_t[]>((sizeof(T) + sizeof(alignment_t) - 1) / sizeof(alignment_t)));
-
-                // move construct with placement new.
-                new(pointer(this_)) T(std::forward<U>(object));
-            }
-
-            static void move_construct(memory& this_, memory&& other) noexcept
-            {
-                if constexpr (soo)
-                {
-                    memory_helper::construct(this_, std::move(*pointer(other)));
-                    memory_helper::destruct(other);
-                }
-                else
-                {
-                    this_.emplace<heap_memory>(std::move(std::get<heap_memory>(other)));
-                    other.emplace<empty_memory>();
-                }
-            }
-
-            static void destruct(memory& this_) noexcept
-            {
-                assert(!std::holds_alternative<empty_memory>(this_));
-                pointer(this_)->~T();
-                this_.emplace<empty_memory>();
-            }
-        };
+        using soo = small_object_optimization<alignment_t>;
+        const soo::basic_vtable* vtable_{};
+        alignas(std::max_align_t) soo::memory memory_{};
 
     public:
-        any() {}
+        // default constructor
+        any() = default;
+
+        // copy constructor (deleted)
         any(const any& other) = delete;
-        any(any&& other) noexcept { this->reset(std::move(other)); }
+
+        // copy assign operator (deleted)
         any& operator=(const any& other) = delete;
-        any& operator=(any&& other) noexcept { return this->reset(std::move(other)); }
 
-        ~any()
+        // move constructor
+        any(any&& other) noexcept
         {
-            if (this->destructor_)
-            {
-                this->destructor_(this->memory_);
-                this->type_ = std::type_index(typeid(void));
-                this->move_constructor_ = nullptr;
-                this->destructor_ = nullptr;
-            }
+            this->operator=(std::move(other));
         }
 
-        template <class T, std::enable_if_t<
-                      std::is_nothrow_move_constructible_v<T>
-                      && !std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, any> // forbid nest any
-                  > * = nullptr>
-        any(T&& object)
-        {
-            memory_helper<T>::construct(memory_, std::forward<T>(object));
-            type_ = std::type_index(typeid(T));
-            move_constructor_ = memory_helper<T>::move_construct;
-            destructor_ = memory_helper<T>::destruct;
-        }
-
-        [[nodiscard]] std::type_index type_index() const noexcept
-        {
-            return type_;
-        }
-
-        template <class T>
-        [[nodiscard]] bool has() const noexcept
-        {
-            return std::type_index(typeid(T)) == type_;
-        }
-
-        template <class T>
-        [[nodiscard]] T* get() noexcept
-        {
-            return has<T>()
-                       ? memory_helper<T>::pointer(memory_)
-                       : nullptr;
-        }
-
-        template <class T>
-        [[nodiscard]] const T* get() const noexcept
-        {
-            return has<T>()
-                       ? memory_helper<T>::pointer(memory_)
-                       : nullptr;
-        }
-
-
-        any& reset(any&& other = {}) noexcept
+        // move assign operator
+        any& operator=(any&& other) noexcept
         {
             if (std::addressof(other) != this)
             {
-                if (this->destructor_)
+                this->reset();
+                if (other.vtable_)
                 {
-                    this->destructor_(this->memory_);
-                    this->type_ = std::type_index(typeid(void));
-                    this->move_constructor_ = nullptr;
-                    this->destructor_ = nullptr;
-                }
-
-                if (other.move_constructor_)
-                {
-                    other.move_constructor_(this->memory_, std::move(other.memory_));
-                    this->type_ = std::exchange(other.type_, std::type_index(typeid(void)));
-                    this->move_constructor_ = std::exchange(other.move_constructor_, nullptr);
-                    this->destructor_ = std::exchange(other.destructor_, nullptr);
+                    vtable_ = std::exchange(other.vtable_, nullptr);
+                    vtable_->move_constructor(this->memory_, std::move(other.memory_));
                 }
             }
 
             return *this;
         }
+
+        // constructor from T&&
+        template <class T, std::enable_if_t<!is_any<T> && is_fit<T>>* = nullptr>
+        any(T&& object)
+        {
+            this->emplace<std::decay_t<T>>(std::forward<T>(object));
+        }
+
+        // in-place constructor from Args&&...
+        template <class T, class... Args, std::enable_if_t<!is_any<T> && is_fit<T> && std::is_constructible_v<T, Args&&...>>* = nullptr>
+        any(std::in_place_type_t<T>, Args&&... args)
+        {
+            this->emplace<T>(std::forward<Args>(args)...);
+        }
+
+        // destructor
+        ~any()
+        {
+            this->reset();
+        }
+
+        // emplaces from Args&&...
+        template <class T, class... Args, std::enable_if_t<!is_any<T> && is_fit<T> && std::is_constructible_v<T, Args&&...>>* = nullptr>
+        std::decay_t<T>& emplace(Args&&... args)
+        {
+            this->reset();
+            auto& ref = soo::construct<T>(this->memory_, std::forward<Args>(args)...);
+            this->vtable_ = soo::get_basic_vtable<T>();
+            return ref;
+        }
+
+        // destructs holding object
+        void reset() noexcept
+        {
+            if (this->vtable_)
+            {
+                this->vtable_->destructor(this->memory_);
+                this->vtable_ = nullptr;
+            }
+        }
+
+        // swaps with rhs
+        void swap(any& rhs) noexcept
+        {
+            any tmp{std::move(rhs)};
+            rhs = std::move(*this);
+            *this = std::move(tmp);
+        }
+
+        [[nodiscard]] bool has_value() const noexcept
+        {
+            return vtable_;
+        }
+
+        [[nodiscard]] const std::type_info& type() const noexcept
+        {
+            return vtable_ ? vtable_->type : typeid(void);
+        }
+
+        [[nodiscard]] std::type_index type_index() const noexcept
+        {
+            return std::type_index{type()};
+        }
+
+        template <class T>
+        [[nodiscard]] bool has() const noexcept
+        {
+            return vtable_ && vtable_->type == typeid(T);
+        }
+
+        template <class T>
+        [[nodiscard]] T* get_if() noexcept
+        {
+            return has<T>() ? soo::pointer<T>(memory_) : nullptr;
+        }
+
+        template <class T>
+        [[nodiscard]] const T* get_if() const noexcept
+        {
+            return has<T>() ? soo::const_pointer<T>(memory_) : nullptr;
+        }
     };
+
+    using std::bad_any_cast;
+
+    template <class T, std::enable_if_t<std::is_constructible_v<T, const std::remove_cv_t<std::remove_reference_t<T>>&>> * = nullptr>
+    [[nodiscard]] T any_cast(const any& a)
+    {
+        std::any x;
+        std::any_cast<int>(std::move(x));
+        if (auto p = a.get_if<std::remove_cv_t<std::remove_reference_t<T>>>()) return *p;
+        else throw bad_any_cast();
+    }
+
+    template <class T, std::enable_if_t<std::is_constructible_v<T, std::remove_cv_t<std::remove_reference_t<T>>&>>* = nullptr>
+    [[nodiscard]] T any_cast(any& a)
+    {
+        if (auto p = a.get_if<std::remove_cv_t<std::remove_reference_t<T>>>()) return *p;
+        else throw bad_any_cast();
+    }
+
+    template <class T, std::enable_if_t<std::is_constructible_v<T, std::remove_cv_t<std::remove_reference_t<T>>>>* = nullptr>
+    [[nodiscard]] T any_cast(any&& a)
+    {
+        if (auto p = a.get_if<std::remove_cv_t<std::remove_reference_t<T>>>()) return std::move(*p);
+        else throw bad_any_cast();
+    }
+
+    template <class T>
+    [[nodiscard]] const T* any_cast(const any* a)
+    {
+        return a->get_if<T>();
+    }
+
+    template <class T>
+    [[nodiscard]] T* any_cast(any* a)
+    {
+        return a->get_if<T>();
+    }
 }

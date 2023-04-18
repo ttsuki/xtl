@@ -3,15 +3,13 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <atomic>
 #include <mutex>
 #include <thread>
 #include <exception>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     /// Simple spin-lock mutex.
     class spin_lock_mutex final
@@ -43,7 +41,7 @@ XTL_NAMESPACE
 
         inline void unlock()
         {
-#ifndef NDEBUG
+#ifdef _DEBUG
             if (!state_.test_and_set(std::memory_order_relaxed)) std::terminate();
 #endif
             state_.clear(std::memory_order_release);
@@ -95,11 +93,9 @@ XTL_NAMESPACE
 
         inline void unlock()
         {
+#ifdef _DEBUG
             thread_id self = std::this_thread::get_id();
-
-#ifndef NDEBUG
-            if (owner_.load(std::memory_order_relaxed) != self)
-                std::terminate();
+            if (owner_.load(std::memory_order_relaxed) != self) std::terminate();
 #endif
 
             if (--lock_count_ == 0)

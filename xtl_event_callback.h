@@ -3,14 +3,13 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <mutex>
 #include <utility>
 #include <functional>
+#include <algorithm>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     template <class F> class event_callback;
 
@@ -19,10 +18,11 @@ XTL_NAMESPACE
     {
     public:
         using subscribe_id = const void*;
+        using mutex = std::mutex;
         using callback = std::function<void(TArgs ...)>;
 
     private:
-        mutable std::mutex mutex_{};
+        mutable mutex mutex_{};
 
         struct entry
         {
@@ -62,7 +62,7 @@ XTL_NAMESPACE
 
         subscribe_id subscribe(callback f, int priority = 0)
         {
-            auto p = std::make_unique<std::byte>();
+            auto p = std::make_unique<std::byte>(); // assign new subscribe_id
             auto id = p.get();
 
             std::lock_guard lock(mutex_);

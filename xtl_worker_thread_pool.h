@@ -3,104 +3,59 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <string>
+#include <string_view>
 #include <thread>
 #include <functional>
 #include <future>
 
-#include "xtl_producer_consumer_queue.h"
+#include "xtl_delegate.h"
+#include "xtl_concurrent_queue.h"
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
-    template <class TTag>
-    class thread_factory
+    /// makes move-only packaged_task-like object.
+    /// returns the pair [task_body, future]
+    template <class Callable, class... Args>
+    [[nodiscard]] static auto make_async_task(Callable callable, Args... args)
+        -> std::pair<xtl::delegate<void()>, std::future<std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>>>
     {
-    public:
-        using thread_prologue = std::function<void(const std::string& label, std::thread::id thread_id)>;
-        using thread_epilogue = std::function<void(const std::string& label, std::thread::id thread_id)>;
+        using R = std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>;
 
-    private:
-        static inline std::shared_mutex mutex_;
-        static inline std::pair<thread_prologue, thread_epilogue> envelope_function_;
+        // packaged_task can be used only if Callable and Args are copyable.
+        //std::packaged_task<R()> task{std::bind(std::forward<Callable>(callable), std::forward<Args>(args)...)};
+        //std::future<R> future = task.get_future();
 
-    public:
-        template <class F, class... Args>
-        static std::thread create(const std::string& label, F function, Args...args)
+        // xtl::delegate supports move-only Callable and Args.
+        std::promise<R> promise;
+        std::future<R> future = promise.get_future();
+        xtl::delegate<void()> task = [promise = std::move(promise), callable = std::forward<Callable>(callable), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
         {
-            std::shared_lock lock(mutex_);
-            return std::thread(
-                [
-                    f = std::move(function),
-                    a = std::make_tuple(std::move(args)...),
-                    e = get_hook_functions(),
-                    label = label
-                ]() mutable
+            if constexpr (!std::is_same_v<R, void>)
+            {
+                try { promise.set_value(std::apply(callable, args)); }
+                catch (...) { promise.set_exception(std::current_exception()); }
+            }
+            else
+            {
+                try
                 {
-                    if (e.first) { e.first(label, std::this_thread::get_id()); }
-                    std::apply(std::move(f), std::move(a));
-                    if (e.second) { e.second(label, std::this_thread::get_id()); }
-                });
-        }
+                    std::apply(callable, args);
+                    promise.set_value();
+                }
+                catch (...) { promise.set_exception(std::current_exception()); }
+            }
+        };
 
-        static std::pair<thread_prologue, thread_epilogue> get_hook_functions()
-        {
-            std::shared_lock lock(mutex_);
-            return envelope_function_;
-        }
-
-        static void set_hook_function(thread_prologue prologue, thread_epilogue epilogue)
-        {
-            std::scoped_lock lock(mutex_);
-            envelope_function_ = std::make_pair(std::move(prologue), std::move(epilogue));
-        }
-    };
-
-    struct default_thread_factory_tag;
-    using default_thread_factory = thread_factory<default_thread_factory_tag>;
-
-    /// an alternative to packaged_task
-    /// returns [body, future]
-    template <class Callable, class...Args>
-    static auto make_async_task(Callable&& callable, Args&&...args)
-    -> std::pair<std::function<void()>, std::future<std::invoke_result_t<Callable, Args...>>>
-    {
-        using R = std::invoke_result_t<Callable, Args...>;
-        auto promise = std::make_shared<std::promise<R>>();
-        auto future = promise->get_future();
-        auto inner = std::bind(std::forward<Callable>(callable), std::forward<Args>(args)...);
-
-        if constexpr (std::is_same_v<R, void>)
-        {
-            return {
-                [promise = std::move(promise), inner = std::move(inner)]() mutable
-                {
-                    try { inner(), promise->set_value(); }
-                    catch (...) { promise->set_exception(std::current_exception()); }
-                },
-                std::move(future)
-            };
-        }
-        else
-        {
-            return {
-                [promise = std::move(promise), inner = std::move(inner)]() mutable
-                {
-                    try { promise->set_value(inner()); }
-                    catch (...) { promise->set_exception(std::current_exception()); }
-                },
-                std::move(future)
-            };
-        }
+        return std::pair<xtl::delegate<void()>, std::future<R>>{std::move(task), std::move(future)};
     }
 
     /// worker thread
     class worker_thread_pool final
     {
         std::vector<std::thread> threads_{};
-        producer_consumer_queue<std::function<void()>> task_queue_{};
+        concurrent_queue<delegate<void()>> task_queue_{};
 
     public:
         worker_thread_pool(const worker_thread_pool& other) = delete;
@@ -108,21 +63,23 @@ XTL_NAMESPACE
         worker_thread_pool& operator=(const worker_thread_pool& other) = delete;
         worker_thread_pool& operator=(worker_thread_pool&& other) noexcept = delete;
 
-        template <class thread_factory = default_thread_factory>
-        worker_thread_pool(const std::string& label, size_t thread_count = 1, thread_factory factory = default_thread_factory{})
+        static inline constexpr auto default_thread_factory_function = [](std::string_view /*label*/, auto function_body, auto... args) { return std::thread(std::move(function_body), std::move(args)...); };
+
+        template <class thread_factory_function = decltype(default_thread_factory_function)>
+        worker_thread_pool(
+            size_t thread_count /* = 4 */,
+            std::string_view label = "",
+            thread_factory_function create_thread_function = default_thread_factory_function)
         {
             for (size_t i = 0; i < thread_count; i++)
-                threads_.emplace_back(factory.create(label, [this]
+            {
+                threads_.emplace_back(create_thread_function(label, [this]
                 {
                     while (auto f = task_queue_.pop_wait())
-                        try
-                        {
-                            (*f)();
-                        }
-                        catch (...)
-                        {
-                        }
+                        try { (*f)(); }
+                        catch (...) { /* ignore */ }
                 }));
+            }
         }
 
         ~worker_thread_pool()
@@ -132,16 +89,11 @@ XTL_NAMESPACE
                 thread.join();
         }
 
-        void post_and_forget(std::function<void()> f)
+        template <class Callable, class... Args>
+        [[nodiscard]] auto async(Callable&& callable, Args&&... args) -> std::future<std::invoke_result_t<std::decay_t<Callable>, std::decay_t<Args>...>>
         {
-            task_queue_.push(std::move(f));
-        }
-
-        template <class Callable, class...Args>
-        [[nodiscard]] auto async(Callable&& callable, Args&&...args) -> std::future<std::invoke_result_t<Callable, Args...>>
-        {
-            auto [body, future] = make_async_task(std::forward<Callable>(callable), std::forward<Args>(args)...);
-            this->post_and_forget(body);
+            auto [body, future] = xtl::make_async_task(std::forward<Callable>(callable), std::forward<Args>(args)...);
+            task_queue_.push(std::move(body));
             return std::move(future);
         }
     };

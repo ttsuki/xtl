@@ -3,13 +3,12 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
 #include <cstddef>
+#include <cstring>
 #include <memory>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     template <size_t alignment = 32>
     class aligned_memory_block
@@ -27,7 +26,6 @@ XTL_NAMESPACE
         size_t size_{};
 
     public:
-        /// Empty
         aligned_memory_block() = default;
 
         /// Allocates memory block

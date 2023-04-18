@@ -3,16 +3,17 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
+#include <cstddef>
 #include <array>
+#include <initializer_list>
+#include <string_view>
 #include <algorithm>
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     template <class T, size_t Size>
-    class fixed_buffer_string final
+    class fixed_buffer_basic_string final
     {
         using base_container = std::array<T, Size>;
 
@@ -32,20 +33,19 @@ XTL_NAMESPACE
         size_type size_{};
 
     public:
-        constexpr fixed_buffer_string() = default;
+        constexpr fixed_buffer_basic_string() = default;
 
-        constexpr fixed_buffer_string(const value_type* data, size_t length)
+        constexpr fixed_buffer_basic_string(const value_type* data, size_t length)
         {
-            size_type sz = size_ = std::min(length, capacity());
+            size_type sz = size_ = std::min<size_t>(length, capacity());
             for (size_t i = 0; i < sz; ++i) container_[i] = data[i]; // std::copy_n
         }
 
-        constexpr fixed_buffer_string(std::initializer_list<value_type> list)
+        constexpr fixed_buffer_basic_string(std::initializer_list<value_type> list)
         {
-            size_type sz = size_ = std::min(list.size(), capacity());
+            size_type sz = size_ = std::min<size_t>(list.size(), capacity());
             for (size_t i = 0; i < sz; ++i) container_[i] = *(list.begin() + i); // std::copy_n
         }
-
 
         [[nodiscard]] constexpr pointer data() noexcept { return container_.data(); }
         [[nodiscard]] constexpr const_pointer data() const noexcept { return container_.data(); }
@@ -63,17 +63,25 @@ XTL_NAMESPACE
         constexpr void resize(size_t sz) noexcept { size_ = sz; }
 
         template <size_t Size2>
-        constexpr fixed_buffer_string& operator +=(const fixed_buffer_string<T, Size2>& rhs) noexcept
+        constexpr fixed_buffer_basic_string& operator +=(const fixed_buffer_basic_string<T, Size2>& rhs) noexcept
         {
-            size_type sz = std::min(capacity() - size(), rhs.size());
+            size_type sz = std::min<size_t>(capacity() - size(), rhs.size());
             for (size_t i = 0; i < sz; ++i) container_[size_ + i] = rhs[i]; // std::copy_n
             size_ += sz;
             return *this;
         }
 
-        constexpr fixed_buffer_string& operator +=(std::initializer_list<value_type> rhs) noexcept
+        constexpr fixed_buffer_basic_string& operator +=(std::initializer_list<value_type> rhs) noexcept
         {
-            size_type sz = std::min(capacity() - size(), rhs.size());
+            size_type sz = std::min<size_t>(capacity() - size(), rhs.size());
+            for (size_t i = 0; i < sz; ++i) container_[size_ + i] = std::data(rhs)[i]; // std::copy_n
+            size_ += sz;
+            return *this;
+        }
+
+        constexpr fixed_buffer_basic_string& operator +=(std::basic_string_view<value_type> rhs) noexcept
+        {
+            size_type sz = std::min<size_t>(capacity() - size(), rhs.size());
             for (size_t i = 0; i < sz; ++i) container_[size_ + i] = std::data(rhs)[i]; // std::copy_n
             size_ += sz;
             return *this;
@@ -81,8 +89,10 @@ XTL_NAMESPACE
     };
 
     template <class T, size_t Size, class U>
-    constexpr auto operator +(fixed_buffer_string<T, Size> lhs, const U& rhs) noexcept -> std::decay_t<decltype(lhs += rhs)>
+    constexpr auto operator +(fixed_buffer_basic_string<T, Size> lhs, const U& rhs) noexcept -> std::decay_t<decltype(lhs += rhs)>
     {
         return lhs += rhs;
     }
+
+    template <size_t Size> using fixed_buffer_string = fixed_buffer_basic_string<char, Size>;
 }

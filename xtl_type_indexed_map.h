@@ -3,20 +3,19 @@
 /// @author ttsuki
 
 #pragma once
-#include "xtl.config.h"
 
-#include <unordered_map>
 #include <typeindex>
+#include <unordered_map>
+#include <stdexcept>
 
 #include "xtl_any.h"
 
-namespace
-XTL_NAMESPACE
+namespace xtl
 {
     class type_indexed_map final
     {
         // type_index(T) -> T
-        std::unordered_map<std::type_index, xtl::any> container_{};
+        std::unordered_map<std::type_index, any> container_{};
         template <class T> static inline std::type_index index = std::type_index(typeid(T));
 
     public:
@@ -28,10 +27,26 @@ XTL_NAMESPACE
         ~type_indexed_map() = default;
 
         template <class T>
+        T& insert(std::decay_t<T> value)
+        {
+            container_.erase(index<T>);
+            auto [it, inserted] = container_.insert_or_assign(index<T>, std::move(value));
+            return *it->second.template get_if<T>();
+        }
+
+        template <class T, class...Args>
+        T& emplace(Args&&...args)
+        {
+            container_.erase(index<T>);
+            auto [it, inserted] = container_.emplace(std::piecewise_construct, std::make_tuple(index<T>), std::forward_as_tuple(std::in_place_type<T>, std::forward<Args>(args)...));
+            return *it->second.template get_if<T>();
+        }
+
+        template <class T>
         [[nodiscard]] const T* find() const noexcept
         {
             if (auto it = container_.find(index<T>); it != container_.end())
-                return it->second.template get<T>();
+                return it->second.template get_if<T>();
 
             return nullptr; // not set
         }
@@ -49,7 +64,7 @@ XTL_NAMESPACE
         }
 
         template <class T>
-        [[nodiscard]] const T& get() const
+        [[nodiscard]] const T& at() const
         {
             if (auto* p = find<T>())
                 return *p;
@@ -58,23 +73,15 @@ XTL_NAMESPACE
         }
 
         template <class T>
-        [[nodiscard]] T& get()
+        [[nodiscard]] T& at()
         {
-            return const_cast<T&>(const_cast<const type_indexed_map*>(this)->get<T>());
-        }
-
-        template <class T>
-        T& set(std::decay_t<T> value)
-        {
-            container_.erase(index<T>);
-            auto [it, inserted] = container_.emplace(index<T>, std::move(value));
-            return *it->second.template get<T>();
+            return const_cast<T&>(const_cast<const type_indexed_map*>(this)->at<T>());
         }
 
         template <class T>
         void erase()
         {
-            container_.erase(std::type_index(typeid(T)));
+            return container_.erase(index<T>);
         }
     };
 }

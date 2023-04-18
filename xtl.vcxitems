@@ -14,33 +14,37 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)LICENSE.ja.md" />
     <None Include="$(MSBuildThisFileDirectory)LICENSE.md" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE.MIT.md" />
     <None Include="$(MSBuildThisFileDirectory)README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl.config.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_aligned_memory_block.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_any.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_cache_map.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_concurrent_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_delegate.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_enum_struct_bitwise_operators.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_event_callback.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_exception.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_filesystem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_fixed_buffer_string.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_fixed_memory_stream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_functional.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_lazy.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_logger.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_memory_block_iostream.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_memory_byte_stream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_manual_reset_event.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_mstream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_ostream.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_producer_consumer_queue.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_rastream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_single_thread.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_small_object_optimization.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_spin_lock_mutex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_stdc++.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_temp_memory_buffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_timestamp.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_type_indexed_map.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_unique_handle.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl_type_indexed_pointer_map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_value_or_error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl_worker_thread_pool.h" />
   </ItemGroup>
