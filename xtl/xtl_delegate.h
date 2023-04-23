@@ -40,7 +40,7 @@ namespace xtl
             template <class T>
             static R invoke(memory& m, A... args)
             {
-                 return (*base::template pointer<T>(m))(std::forward<A>(args)...);
+                return (*base::template pointer<T>(m))(std::forward<A>(args)...);
             }
 
             struct vtable
@@ -63,12 +63,12 @@ namespace xtl
 
         // emplace
         template <class T>
-        void emplace(T&& args)
+        void emplace(T&& arg)
         {
             using U = std::remove_cv_t<std::remove_reference_t<T>>;
 
             this->reset();
-            soo::template construct<U>(this->memory_, std::forward<T>(args));
+            soo::template construct<U>(this->memory_, std::forward<T>(arg));
             this->vtable_ = &soo::template vtable_for<U>;
         }
 
@@ -122,79 +122,38 @@ namespace xtl
             return *this;
         }
 
-        // from functor
-        template <class Functor, std::enable_if_t<
-                      std::is_class_v<std::decay_t<Functor>> &&
-                      std::is_nothrow_move_constructible_v<std::decay_t<Functor>> &&
-                      std::is_same_v<R, std::invoke_result_t<Functor, A...>> &&
-                      std::is_constructible_v<std::remove_cv_t<std::remove_reference_t<Functor>>, Functor>
-                  >* = nullptr>
-        delegate(Functor&& f)
-        {
-            this->emplace(std::forward<Functor>(f));
-        }
-
         // from function pointer
-        delegate(R (*function_pointer)(A...))
-        {
-            this->emplace<R(*)(A...)>(static_cast<R(*)(A...)>(function_pointer));
-        }
+        delegate(R (*function_pointer)(A...)) { this->emplace(std::move(function_pointer)); }
 
 #if defined(_MSC_VER) && defined(_M_IX86)
-        delegate(R (__stdcall *function_pointer)(A...)) { this->emplace<R(__stdcall*)(A...)>(static_cast<R(__stdcall*)(A...)>(function_pointer)); }
-        delegate(R (__thiscall *function_pointer)(A...)) { this->emplace<R(__thiscall*)(A...)>(static_cast<R(__thiscall*)(A...)>(function_pointer)); }
+        delegate(R(__stdcall* function_pointer)(A...)) { this->emplace(std::move(function_pointer)); }
+        delegate(R(__thiscall* function_pointer)(A...)) { this->emplace(std::move(function_pointer)); }
 #endif
 
-        // from member function pointer
-        template <class C>
-        delegate(C* instance_pointer, R (C::*member_function)(A...))
-            : delegate([instance_pointer, member_function](A... a)
-            {
-                return std::invoke(member_function, *instance_pointer, std::forward<A>(a)...);
-            }) { }
-
-        // from member function pointer
-        template <class C>
-        delegate(const C* instance_pointer, R (C::*member_function)(A...) const)
-            : delegate([instance_pointer, member_function](A... a)
-            {
-                return std::invoke(member_function, *instance_pointer, std::forward<A>(a)...);
-            }) { }
-
-        // from member function pointer (with instance pointer-like type)
-        template <class P, class K, class C = std::remove_reference_t<decltype(*std::declval<P>())>, std::enable_if_t<
-                      std::is_class_v<std::remove_cv_t<std::remove_reference_t<P>>> &&
-                      std::is_constructible_v<std::remove_cv_t<std::remove_reference_t<P>>, P> &&
-                      std::is_const_v<C> && std::is_invocable_r_v<R, R(K::*)(A...) const, decltype(*std::declval<P>()), A...>
+        // from functor
+        template <class Functor, std::enable_if_t<
+                      std::is_class_v<std::remove_cv_t<std::remove_reference_t<Functor>>> &&
+                      std::is_constructible_v<std::remove_cv_t<std::remove_reference_t<Functor>>, Functor> &&
+                      std::is_nothrow_move_constructible_v<std::remove_cv_t<std::remove_reference_t<Functor>>> &&
+                      std::is_invocable_r_v<R, Functor, A...>
                   >* = nullptr>
-        delegate(P&& instance_pointer, R (K::*member_function)(A...) const)
-            : delegate([instance_pointer = std::forward<P>(instance_pointer), member_function](A... a)
-            {
-                return std::invoke(member_function, *instance_pointer, std::forward<A>(a)...);
-            }) { }
+        delegate(Functor&& functor)
+        {
+            this->emplace(std::forward<Functor>(functor));
+        }
 
-        // from member function pointer (with instance pointer-like type)
-        template <class P, class K, class C = std::remove_reference_t<decltype(*std::declval<P>())>, std::enable_if_t<
-                      std::is_class_v<std::remove_cv_t<std::remove_reference_t<P>>> &&
-                      std::is_constructible_v<std::remove_cv_t<std::remove_reference_t<P>>, P> &&
-                      !std::is_const_v<C> && std::is_invocable_r_v<R, R (K::*)(A...) const, decltype(*std::declval<P>()), A...>
+        // from member-function-pointer-like type with binding instance-pointer-like type
+        template <class P, class F, std::enable_if_t<
+                      std::is_constructible_v<std::remove_const_t<std::remove_reference_t<P>>, P> &&
+                      std::is_nothrow_move_constructible_v<std::remove_cv_t<std::remove_reference_t<P>>> &&
+                      std::is_constructible_v<std::remove_const_t<std::remove_reference_t<F>>, F> &&
+                      std::is_nothrow_move_constructible_v<std::remove_cv_t<std::remove_reference_t<F>>> &&
+                      std::is_invocable_r_v<R, F, P, A...>
                   >* = nullptr>
-        delegate(P&& instance_pointer, R (K::*member_function)(A...) const)
-            : delegate([instance_pointer = std::forward<P>(instance_pointer), member_function](A... a)
+        delegate(P&& instance_pointer, F&& member_function)
+            : delegate([instance_pointer = std::forward<P>(instance_pointer), member_function = std::forward<F>(member_function)](A... a) -> R
             {
-                return std::invoke(member_function, *instance_pointer, std::forward<A>(a)...);
-            }) { }
-
-        // from member function pointer (with instance pointer-like type)
-        template <class P, class K, class C = std::remove_reference_t<decltype(*std::declval<P>())>, std::enable_if_t<
-                      std::is_class_v<std::remove_cv_t<std::remove_reference_t<P>>> &&
-                      std::is_constructible_v<std::remove_cv_t<std::remove_reference_t<P>>, P> &&
-                      !std::is_const_v<C> && std::is_invocable_r_v<R, R (K::*)(A...), decltype(*std::declval<P>()), A...>
-                  >* = nullptr>
-        delegate(P&& instance_pointer, R (K::*member_function)(A...))
-            : delegate([instance_pointer = std::forward<P>(instance_pointer), member_function](A... a)
-            {
-                return std::invoke(member_function, *instance_pointer, std::forward<A>(a)...);
+                return std::invoke(member_function, instance_pointer, std::forward<A>(a)...);
             }) { }
 
         // destruct
@@ -217,7 +176,7 @@ namespace xtl
         }
     };
 
-    // Deduction guides for delegate
+    // CTAD guilds
     // @formatter:off
 
     // from function pointers
@@ -228,24 +187,24 @@ namespace xtl
 #endif
 
     // from member function pointers with binding instance pointer
-    template <         class C, class R, class... A> delegate(      C*, R(C::*)(A...)      ) -> delegate<R(A...)>;
-    template <         class C, class R, class... A> delegate(const C*, R(C::*)(A...) const) -> delegate<R(A...)>;
-    template <class P, class C, class R, class... A> delegate(     P&&, R(C::*)(A...)      ) -> delegate<R(A...)>;
-    template <class P, class C, class R, class... A> delegate(     P&&, R(C::*)(A...) const) -> delegate<R(A...)>;
-
-    // from others
     namespace delegate_detail
     {
         template <class F> struct function_type_deduction;
-        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...)                > { using type = R(A...); };
-        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...) const          > { using type = R(A...); };
-        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...)       noexcept > { using type = R(A...); };
-        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...) const noexcept > { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...)                 > { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...) const           > { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...)       &         > { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...) const &         > { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...)         noexcept> { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...) const   noexcept> { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...)       & noexcept> { using type = R(A...); };
+        template <class C, class R, class... A> struct function_type_deduction<R(C::*)(A...) const & noexcept> { using type = R(A...); };
     }
-    template <class F> delegate(F) -> delegate<typename delegate_detail::function_type_deduction<decltype(&F::operator())>::type>;
+    template <class P, class F> delegate(P&&, F&&) -> delegate<typename delegate_detail::function_type_deduction<std::remove_reference_t<F>>::type>;
+    template <class F> delegate(F&&) -> delegate<typename delegate_detail::function_type_deduction<decltype(&std::remove_reference_t<F>::operator())>::type>;
 
     // @formatter:on
 
+    // any_invokable (C++23)
     template <class T> using any_invokable = delegate<T>;
 
 #if 0 // type deduction guide test
@@ -263,7 +222,6 @@ namespace xtl
             {
                 struct F
                 {
-                    void operator ()(int) { }
                     void operator ()(int) const { }
                 };
 
