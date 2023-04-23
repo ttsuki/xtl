@@ -11,4 +11,8 @@ else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-add_executable (xtl "test.cpp")
+
+include_directories("../")
+set (ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../")
+file(GLOB HEADER_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../xtl/*.h")
+add_executable (xtl "playground.cpp" ${HEADER_FILES})

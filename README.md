@@ -1,4 +1,4 @@
-# Poost XTL
+# XTL
 
 TTsuki's eXperimental Template Library Collection
 

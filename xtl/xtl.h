@@ -8,6 +8,7 @@
 #include "./xtl_aligned_memory_block.h"
 #include "./xtl_any.h"
 #include "./xtl_concurrent_queue.h"
+#include "./xtl_copy_move_operation_debug_helper.h"
 #include "./xtl_delegate.h"
 #include "./xtl_enum_struct_bitwise_operators.h"
 #include "./xtl_event_callback.h"
