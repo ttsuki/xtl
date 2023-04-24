@@ -26,6 +26,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_concurrent_queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_copy_move_operation_debug_helper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_delegate.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_enum_indexed_array.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_enum_struct_bitwise_operators.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_event_callback.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_exception.h" />
