@@ -24,6 +24,7 @@
 #include "./xtl_rastream.h"
 #include "./xtl_single_thread.h"
 #include "./xtl_small_object_optimization.h"
+#include "./xtl_span.h"
 #include "./xtl_spin_lock_mutex.h"
 #include "./xtl_temp_memory_buffer.h"
 #include "./xtl_timestamp.h"

@@ -40,6 +40,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_rastream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_single_thread.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_small_object_optimization.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_span.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_spin_lock_mutex.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_stdc++.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_temp_memory_buffer.h" />
