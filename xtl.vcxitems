@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -46,6 +46,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_timestamp.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_type_indexed_map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_type_indexed_pointer_map.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_type_punning_iterator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_value_or_error.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)xtl\xtl_worker_thread_pool.h" />
   </ItemGroup>
