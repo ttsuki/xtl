@@ -1,6 +1,8 @@
 /// @file
 /// @brief  xtl::manual_reset_event
-/// @author ttsuki
+/// @author (C) 2023 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
+
 #pragma once
 
 #include <chrono>

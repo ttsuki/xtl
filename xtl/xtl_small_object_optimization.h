@@ -1,6 +1,7 @@
 /// @file
-/// @brief  xtl::any - a move only any implementation
-/// @author ttsuki
+/// @brief  xtl::small_object_optimization - memory allocator with sso
+/// @author (C) 2023 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
 
 #pragma once
 

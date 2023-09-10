@@ -1,6 +1,7 @@
 /// @file
 /// @brief  xtl::type_indexed_pmap - A simple type-pointer container
-/// @author ttsuki
+/// @author (C) 2023 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
 
 #pragma once
 

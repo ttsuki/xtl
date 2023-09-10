@@ -1,6 +1,7 @@
 /// @file
-/// @brief  xtl::temporally memory buffer
-/// @author ttsuki
+/// @brief  xtl::temp_memory_buffer_t - temporally memory buffer
+/// @author (C) 2023 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
 
 #pragma once
 

@@ -1,6 +1,8 @@
 /// @file
 /// @brief  xtl::timestamp - Simple timestamp type
-/// @author ttsuki
+/// @author (C) 2021 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
+
 #pragma once
 
 #include <chrono>

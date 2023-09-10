@@ -1,6 +1,7 @@
 /// @file
 /// @brief  xtl::enum_struct_bitwise_operators
-/// @author ttsuki
+/// @author (C) 2022 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
 
 #pragma once
 

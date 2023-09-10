@@ -1,6 +1,7 @@
 /// @file
 /// @brief  xtl
-/// @author ttsuki
+/// @author (C) 2021-2023 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
 
 #pragma once
 #include "./xtl_stdc++.h"

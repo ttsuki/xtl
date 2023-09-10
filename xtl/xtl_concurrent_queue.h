@@ -1,6 +1,7 @@
 /// @file
 /// @brief  xtl concurrent_queue - a queue for producer/consumer pattern.
-/// @author ttsuki
+/// @author (C) 2021 ttsuki
+/// Distributed under the Boost Software License, Version 1.0.
 
 #pragma once
 #include <cstddef>
